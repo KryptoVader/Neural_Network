@@ -1,6 +1,7 @@
 package examples;
 
 import java.io.DataInputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import org.knowm.xchart.XYChart;
@@ -22,71 +23,70 @@ public class MNIST{
     private Matrix XTest;
     private Matrix YTest;
 
-    public MNIST(String path)throws InvalidValue{
-        try{
-            XTrain=loadImages(path+"\\train-images-idx3-ubyte");
-            YTrain=loadLabels(path+"\\train-labels-idx1-ubyte");
-            XTest=loadImages(path+"\\t10k-images-idx3-ubyte");
-            YTest=loadLabels(path+"\\t10k-labels-idx1-ubyte");
-        }catch(IOException e){
-            throw new InvalidValue("Could not load MNIST: "+e.getMessage());
+    public MNIST(String path) throws InvalidValue {
+        try {
+            String p = path.endsWith(File.separator) || path.endsWith("/") || path.endsWith("\\") ? path : path + File.separator;
+            XTrain = loadImages(p + "train-images-idx3-ubyte");
+            YTrain = loadLabels(p + "train-labels-idx1-ubyte");
+            XTest = loadImages(p + "t10k-images-idx3-ubyte");
+            YTest = loadLabels(p + "t10k-labels-idx1-ubyte");
+        } catch (IOException e) {
+            throw new InvalidValue("Could not load MNIST: " + e.getMessage());
         }
     }
 
-    private Matrix loadImages(String path)throws IOException,InvalidValue{
-        DataInputStream in=new DataInputStream(new FileInputStream(path));
-        int magic=in.readInt();
-        int N=in.readInt();
-        int rows=in.readInt();
-        int cols=in.readInt();
+    private Matrix loadImages(String path) throws IOException, InvalidValue {
+        try (DataInputStream in = new DataInputStream(new java.io.BufferedInputStream(new FileInputStream(path), 65536))) {
+            int magic = in.readInt();
+            int N = in.readInt();
+            int rows = in.readInt();
+            int cols = in.readInt();
 
-        if(magic!=2051){
-            in.close();
-            throw new InvalidValue("Invalid MNIST image file");
-        }
-
-        if(rows!=28||cols!=28){
-            in.close();
-            throw new InvalidValue("Expected 28x28 images");
-        }
-
-        double[][] data=new double[N][784];
-
-        for(int i=0;i<N;i++){
-            for(int j=0;j<784;j++){
-                data[i][j]=in.readUnsignedByte()/255.0;
+            if (magic != 2051) {
+                throw new InvalidValue("Invalid MNIST image file");
             }
-        }
 
-        in.close();
-        return new Matrix(data);
+            if (rows != 28 || cols != 28) {
+                throw new InvalidValue("Expected 28x28 images");
+            }
+
+            double[][] data = new double[N][784];
+            byte[] buffer = new byte[784];
+
+            for (int i = 0; i < N; i++) {
+                in.readFully(buffer);
+                for (int j = 0; j < 784; j++) {
+                    data[i][j] = (buffer[j] & 0xFF) / 255.0;
+                }
+            }
+            return new Matrix(data);
+        }
     }
 
-    private Matrix loadLabels(String path)throws IOException,InvalidValue{
-        DataInputStream in=new DataInputStream(new FileInputStream(path));
-        int magic=in.readInt();
-        int N=in.readInt();
+    private Matrix loadLabels(String path) throws IOException, InvalidValue {
+        try (DataInputStream in = new DataInputStream(new java.io.BufferedInputStream(new FileInputStream(path), 65536))) {
+            int magic = in.readInt();
+            int N = in.readInt();
 
-        if(magic!=2049){
-            in.close();
-            throw new InvalidValue("Invalid MNIST label file");
-        }
-
-        double[][] data=new double[N][10];
-
-        for(int i=0;i<N;i++){
-            int label=in.readUnsignedByte();
-
-            if(label<0||label>9){
-                in.close();
-                throw new InvalidValue("Invalid MNIST label");
+            if (magic != 2049) {
+                throw new InvalidValue("Invalid MNIST label file");
             }
 
-            data[i][label]=1.0;
-        }
+            double[][] data = new double[N][10];
+            byte[] buffer = new byte[N];
+            in.readFully(buffer);
 
-        in.close();
-        return new Matrix(data);
+            for (int i = 0; i < N; i++) {
+                int label = buffer[i] & 0xFF;
+
+                if (label < 0 || label > 9) {
+                    throw new InvalidValue("Invalid MNIST label");
+                }
+
+                data[i][label] = 1.0;
+            }
+            return new Matrix(data);
+        }
     }
 
     public Matrix getXTrain(){

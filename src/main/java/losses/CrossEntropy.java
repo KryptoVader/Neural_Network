@@ -4,7 +4,7 @@ import core.Matrix;
 import exceptions.InvalidValue;
 
 public class CrossEntropy implements Loss {
-    private static final double EPS = 1e-12;
+    private static final double EPS = 1e-15;
 
     @Override
     public double forward(Matrix y, Matrix prediction) {

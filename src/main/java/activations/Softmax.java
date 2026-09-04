@@ -30,20 +30,17 @@ public class Softmax implements Activation {
 
     @Override
     public Matrix backward(Matrix dLA, Matrix z) throws InvalidValue {
-        Matrix a=forward(z);
-        int N=z.shape()[0], O=z.shape()[1];
-        Matrix dZ=new Matrix(N,O);
+        Matrix a = forward(z);
+        int N = z.shape()[0], O = z.shape()[1];
+        Matrix dZ = new Matrix(N, O);
 
-        for(int i=0;i<N;i++){
-            for(int j=0;j<O;j++){
-                double gradient=0.0;
-                for(int k=0;k<O;k++){
-                    double delta=(j==k)?1.0:0.0;
-                    double jacobian=a.get(i,j)*(delta-a.get(i,k));
-                    gradient+=dLA.get(i,k)*jacobian;
-                }
-
-                dZ.set(i,j,gradient);
+        for (int i = 0; i < N; i++) {
+            double dot = 0.0;
+            for (int k = 0; k < O; k++) {
+                dot += dLA.get(i, k) * a.get(i, k);
+            }
+            for (int j = 0; j < O; j++) {
+                dZ.set(i, j, a.get(i, j) * (dLA.get(i, j) - dot));
             }
         }
         return dZ;

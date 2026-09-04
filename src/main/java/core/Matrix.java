@@ -54,10 +54,15 @@ public class Matrix {
         }
     }
 
-    public static Matrix augment(Matrix m) throws InvalidValue{
-        Matrix res = new Matrix(m.shape()[0], m.shape()[1] + 1);
-        for(int i = 0; i < m.shape()[0]; i++){
-            res.set(i,m.shape()[1], 1);
+    public static Matrix augment(Matrix m) throws InvalidValue {
+        int r = m.shape()[0];
+        int c = m.shape()[1];
+        Matrix res = new Matrix(r, c + 1);
+        for (int i = 0; i < r; i++) {
+            for (int j = 0; j < c; j++) {
+                res.set(i, j, m.get(i, j));
+            }
+            res.set(i, c, 1.0);
         }
         return res;
     }
@@ -121,7 +126,7 @@ public class Matrix {
     }
 
     public double[] getRow(int i) {
-        return this.m[i];
+        return this.m[i].clone();
     }
 
     public double[] getCol(int j) {
@@ -201,20 +206,32 @@ public class Matrix {
     }
 
     public static Matrix matmul(Matrix m1, Matrix m2) throws InvalidValue {
-        int[] s1 = m1.shape();
-        int[] s2 = m2.shape();
+        int r1 = m1.m.length;
+        int c1 = m1.m[0].length;
+        int r2 = m2.m.length;
+        int c2 = m2.m[0].length;
 
-        if (s1[1] != s2[0]) {
+        if (c1 != r2) {
             throw new InvalidValue("cannot perform matrix multiplication");
         }
 
-        double[][] n = new double[s1[0]][s2[1]];
-        for (int i = 0; i < s1[0]; i++) {
-            for (int j = 0; j < s2[1]; j++) {
-                n[i][j] = dot(m1.getRow(i), m2.getCol(j));
+        double[][] a = m1.m;
+        double[][] b = m2.m;
+        double[][] res = new double[r1][c2];
+
+        for (int i = 0; i < r1; i++) {
+            double[] aRow = a[i];
+            double[] resRow = res[i];
+            for (int k = 0; k < c1; k++) {
+                double aVal = aRow[k];
+                if (aVal == 0.0) continue;
+                double[] bRow = b[k];
+                for (int j = 0; j < c2; j++) {
+                    resRow[j] += aVal * bRow[j];
+                }
             }
         }
-        return new Matrix(n);
+        return new Matrix(res);
     }
 
     private static boolean isValid(Matrix m1, Matrix m2){
@@ -277,6 +294,10 @@ public class Matrix {
             }
         }
         return ma;
+    }
+
+    public static Matrix scalarMultiply(Matrix m, double n) throws InvalidValue {
+        return new Matrix(scalerMul(m, n));
     }
 
     public static Matrix Hadamard(Matrix m1, Matrix m2) throws InvalidValue{

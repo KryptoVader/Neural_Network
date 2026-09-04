@@ -3,6 +3,8 @@ package layers;
 import core.Matrix;
 import exceptions.InvalidValue;
 
+import java.util.Random;
+
 public class Linear {
     private Matrix x;
     private Matrix w;
@@ -10,12 +12,20 @@ public class Linear {
     private Matrix dW;
     private Matrix dB;
 
-    public Linear(int inputFeatures,int outputFeatures) throws InvalidValue {
-        this.w=new Matrix(outputFeatures,inputFeatures);
-        this.b=new Matrix(1,outputFeatures);
-        for(int i=0;i<outputFeatures;i++){
-            for(int j=0;j<inputFeatures;j++){
-                this.w.set(i,j,(Math.random()-0.5)*2.0);
+    public Linear(int inputFeatures, int outputFeatures) throws InvalidValue {
+        this(inputFeatures, outputFeatures, new Random());
+    }
+
+    public Linear(int inputFeatures, int outputFeatures, long seed) throws InvalidValue {
+        this(inputFeatures, outputFeatures, new Random(seed));
+    }
+
+    public Linear(int inputFeatures, int outputFeatures, Random rng) throws InvalidValue {
+        this.w = new Matrix(outputFeatures, inputFeatures);
+        this.b = new Matrix(1, outputFeatures);
+        for (int i = 0; i < outputFeatures; i++) {
+            for (int j = 0; j < inputFeatures; j++) {
+                this.w.set(i, j, (rng.nextDouble() - 0.5) * 2.0);
             }
         }
     }
@@ -29,7 +39,7 @@ public class Linear {
     }
 
     public Matrix forward(Matrix X) throws InvalidValue {
-        this.x = X;
+        this.x = new Matrix(X);
         Matrix xwt = Matrix.matmul(X, Matrix.Transpose((this.w)));
         for (int i = 0; i < xwt.shape()[0]; i++) {
             for (int j = 0; j < xwt.shape()[1]; j++) {

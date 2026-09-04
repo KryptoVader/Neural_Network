@@ -4,6 +4,8 @@ import core.Matrix;
 import activations.Activation;
 import exceptions.InvalidValue;
 
+import java.util.Random;
+
 public class Layer {
     private Linear l;
     private Activation a;
@@ -11,6 +13,16 @@ public class Layer {
 
     public Layer(int input_features, int output_features, Activation a) throws InvalidValue {
         this.l = new Linear(input_features, output_features);
+        this.a = a;
+    }
+
+    public Layer(int input_features, int output_features, Activation a, long seed) throws InvalidValue {
+        this.l = new Linear(input_features, output_features, seed);
+        this.a = a;
+    }
+
+    public Layer(int input_features, int output_features, Activation a, Random rng) throws InvalidValue {
+        this.l = new Linear(input_features, output_features, rng);
         this.a = a;
     }
 
@@ -38,5 +50,9 @@ public class Layer {
 
     public Linear getLinear() {
         return this.l;
+    }
+
+    public Activation getActivation() {
+        return this.a;
     }
 }

@@ -16,11 +16,20 @@ public class NeuralNetwork {
     private Layer[] layers;
     private Loss loss;
     private Optimizer optimizer;
+    private Random random = new Random();
 
     public NeuralNetwork(Layer[] layers, Loss loss, Optimizer optimizer) {
         this.layers = layers;
         this.loss = loss;
         this.optimizer = optimizer;
+    }
+
+    public void setSeed(long seed) {
+        this.random = new Random(seed);
+    }
+
+    public void setRandom(Random random) {
+        this.random = random;
     }
 
     public Matrix forward(Matrix X) throws InvalidValue {
@@ -41,13 +50,29 @@ public class NeuralNetwork {
     public double train(Matrix X, Matrix y) throws InvalidValue {
         Matrix pred = forward(X);
         double loss_val = this.loss.forward(y, pred);
-        Matrix dLA = this.loss.derivative(y, pred);
-        backward(dLA);
+
+        if (this.loss instanceof CrossEntropy && this.layers.length > 0 && this.layers[this.layers.length - 1].getActivation() instanceof Softmax) {
+            int N = y.shape()[0];
+            int O = y.shape()[1];
+            Matrix dZ = new Matrix(N, O);
+            for (int i = 0; i < N; i++) {
+                for (int j = 0; j < O; j++) {
+                    dZ.set(i, j, (pred.get(i, j) - y.get(i, j)) / N);
+                }
+            }
+            Matrix dA = this.layers[this.layers.length - 1].getLinear().backward(dZ);
+            for (int i = this.layers.length - 2; i >= 0; i--) {
+                dA = this.layers[i].backward(dA);
+            }
+        } else {
+            Matrix dLA = this.loss.derivative(y, pred);
+            backward(dLA);
+        }
+
         for (Layer l : this.layers) {
             Linear li = l.getLinear();
             li.setW(this.optimizer.update(li.getW(), li.getDW()));
             li.setB(this.optimizer.update(li.getB(), li.getDB()));
-
         }
         return loss_val;
     }
@@ -79,9 +104,8 @@ public class NeuralNetwork {
     }
 
     private void shuffle(int[] indices) {
-        Random random = new Random();
         for (int i = indices.length - 1; i > 0; i--) {
-            int j = random.nextInt(i + 1);
+            int j = this.random.nextInt(i + 1);
             int temp = indices[i];
             indices[i] = indices[j];
             indices[j] = temp;
