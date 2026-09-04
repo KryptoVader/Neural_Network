@@ -230,10 +230,7 @@ java -cp "target/classes;..\lib\xchart-3.8.8.jar" examples.MNIST "C:\path\to\MNI
 The implementation's analytical gradients are validated independently using central finite differences:
 
 $$
-\frac{\partial L}{\partial \theta}
-\approx
-\frac{L(\theta+\epsilon)-L(\theta-\epsilon)}
-{2\epsilon}
+\frac{\partial L}{\partial \theta} \approx \frac{L(\theta+\epsilon)-L(\theta-\epsilon)}{2\epsilon}
 $$
 
 Gradient checks cover:
@@ -251,9 +248,7 @@ The validation suite confirms numerical agreement between analytical backpropaga
 The repository also validates the fused Softmax + CrossEntropy derivative:
 
 $$
-\frac{\partial L}{\partial Z}
-=
-\frac{P-Y}{N}
+\frac{\partial L}{\partial Z} = \frac{P-Y}{N}
 $$
 
 This avoids catastrophic gradient cancellation for highly confident incorrect predictions.
@@ -292,9 +287,7 @@ Special attention is given to numerical stability in the Softmax + CrossEntropy 
 A naive implementation can suffer from severe gradient cancellation when the model assigns an extremely small probability to the correct class. The implementation therefore provides a fused analytical backward path for Softmax + CrossEntropy using:
 
 $$
-\frac{\partial L}{\partial Z}
-=
-\frac{P-Y}{N}
+\frac{\partial L}{\partial Z} = \frac{P-Y}{N}
 $$
 
 The standalone Softmax backward pass also uses a vector-Jacobian formulation rather than explicitly constructing the full Softmax Jacobian, reducing unnecessary computation.
@@ -402,15 +395,7 @@ The goal of AEGIS Neural Network is not to compete with established deep learnin
 The goal is to make the mechanics of neural networks explicit:
 
 $$
-XW^T+b
-\rightarrow
-\text{Activation}
-\rightarrow
-\text{Loss}
-\rightarrow
-\text{Backpropagation}
-\rightarrow
-\text{Parameter Update}
+XW^T+b \rightarrow \text{Activation} \rightarrow \text{Loss} \rightarrow \text{Backpropagation} \rightarrow \text{Parameter Update}
 $$
 
 Every major mathematical operation is implemented directly in Java, allowing the complete path from matrix multiplication to gradient descent to be inspected, tested, and validated.
